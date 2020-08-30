@@ -10,6 +10,7 @@
 background_mode = 4
 tonemap_mode = 1
 dof_blur_far_distance = 0.01
+glow_enabled = true
 glow_hdr_threshold = 4.0
 
 [node name="main" type="Node2D"]
@@ -40,7 +41,7 @@ position = Vector2( 1120, 480 )
 position = Vector2( 1120, 224 )
 
 [node name="5" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 928, 480 )
+position = Vector2( 800, 736 )
 
 [node name="Enemies" type="Node2D" parent="."]
 light_mask = 0

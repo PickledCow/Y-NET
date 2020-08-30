@@ -7,8 +7,6 @@ var targetReached = true
 func _process(delta):
 	$AmbientLight.scale = zoom
 	$AmbientLight.position = offset
-	$EnemyLight.scale = zoom
-	$EnemyLight.position = offset
 	if freeMove:
 		var move = Vector2()
 		if Input.is_action_pressed("cameraUp"): move.y -= 1
@@ -21,8 +19,6 @@ func _process(delta):
 		position = Vector2(clamp(position.x, -offset.x, get_parent().maxX*64 - offset.x),clamp(position.y, -offset.y, get_parent().maxY*64 - offset.y))
 	
 	if !targetReached:
-		print(targetPosition, position)
-		
 		position = position.linear_interpolate(targetPosition, exp(-88 * delta))
 		
 		if position.distance_squared_to(targetPosition) < 100:
