@@ -9,6 +9,7 @@ var maxY = 0
 var astar
 var path
 
+var bubbleTextPrefab = preload("res://objects/PopupText.tscn")
 
 func generateAStar():
 	# Find bounds first
@@ -38,7 +39,19 @@ func generateAStar():
 	
 	return astar
 
+func createBubbleText(text, pos, disco):
+	var bubbleText = bubbleTextPrefab.instance()
+	var displayText = ''
+	if disco: displayText += '[rainbow freq=0.1][wave amp=256 freq=12]'
+	displayText += text
+	bubbleText.init(displayText, pos)
+	add_child(bubbleText)
+
+
+
 var players = []
+
+var enemies = []
 
 var currentPlayer = 0
 
@@ -47,6 +60,8 @@ func _ready():
 	path = astar.get_point_path(maxX + 2, maxX + 2)	
 	for child in $Players.get_children():
 		players.append(child)
+	for child in $Enemies.get_children():
+		enemies.append(child)
 	$Camera.warpToPosition(players[currentPlayer].position)
 		
 var t = 0
@@ -65,11 +80,17 @@ func _physics_process(delta):
 			mouse.x = floor(mouse.x)
 			mouse.y = floor(mouse.y)
 			
-			if mouse.x < 0 || mouse.x > maxX:
-				valid = false
+			var occupied = false
+			var tooFar = false
 			
-			
-			for p in players:
+			for p in players + enemies:
+				var ppos = (p.position - Vector2(32,32)) / 64
+				ppos.x = floor(ppos.x)
+				ppos.y = floor(ppos.y)
+				if (mouse == ppos):
+					occupied = true
+					break
+			for p in enemies:
 				var ppos = (p.position - Vector2(32,32)) / 64
 				ppos.x = floor(ppos.x)
 				ppos.y = floor(ppos.y)
@@ -80,17 +101,23 @@ func _physics_process(delta):
 			
 			var newpath = astar.get_point_path(playerpos.y * (maxX + 1) + playerpos.x, mouse.y * (maxX + 1) + mouse.x)
 			
-			if len(newpath) < 2 || len(newpath) * player.walkTime > maxTurnTime:
+			if len(newpath) < 2:
 				valid = false
 				
-			if valid:
+			if (len(newpath)-1) * player.walkTime > maxTurnTime:
+				tooFar = true
+				
+			if mouse.x < 0 || mouse.x > maxX:
+				valid = false
+			
+			if valid && !tooFar && !occupied:
 				$Cursor.validTile()
 				path = newpath
 				arrived = false
 				t = 0
 				u = 0
 			else:
-				$Cursor.invalidTile()
+				$Cursor.invalidTile(len(newpath)-1, maxTurnTime / player.walkTime, !valid, occupied, tooFar)
 			
 		if Input.is_action_just_pressed("shoot"):
 			var player = players[currentPlayer]

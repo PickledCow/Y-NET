@@ -24,8 +24,16 @@ func _process(delta):
 				modulate = Color(1,1,1,1)
 		
 
-func invalidTile():
+func invalidTile(dist, maxDist, invalid, occupied, tooFar):
 	redFadeTimer = redFadeTime
+	var text = "You can't go there"
+	if invalid:
+		pass
+	elif tooFar:
+		text = 'Tile too far away.\nCurrent: ' + str(dist) + "; Max: " + str(maxDist)
+	elif occupied:
+		text = 'Tile is already occupied'
+	get_parent().createBubbleText(text, position, randi()%20 == 0)
 
 func validTile():
 	canUpdate = false
