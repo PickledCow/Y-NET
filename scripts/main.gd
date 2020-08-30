@@ -109,7 +109,7 @@ func _physics_process(delta):
 		
 		
 	if !arrived:
-		#$Camera.position = players[currentPlayer].position
+		$Camera.warpToPosition(players[currentPlayer].position)
 		players[currentPlayer].position = (path[u] * 64 ).linear_interpolate(path[u+1] * 64 , t)+ Vector2(32,32)
 		t += 0.1
 		if t >= 1:
@@ -118,6 +118,6 @@ func _physics_process(delta):
 			if u == len(path) - 1:
 				arrived = true
 				currentPlayer = (currentPlayer + 1) % len(players)
-				$Camera.freeMove = true
-		$Camera.warpToPosition(players[currentPlayer].position)
+				$Camera.warpToPosition(players[currentPlayer].position)
+				
 
