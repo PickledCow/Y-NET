@@ -2,6 +2,8 @@ extends Node2D
 
 onready var tilemap = get_node("TileMap")
 
+var maxTurnTime = 100
+
 var maxX = 0
 var maxY = 0
 var astar
@@ -55,7 +57,8 @@ func _physics_process(delta):
 	var valid = true
 	if arrived:
 		if Input.is_action_just_pressed("click"):
-			var playerpos = (players[currentPlayer].position - Vector2(32,32)) / 64
+			var player = players[currentPlayer]
+			var playerpos = (player.position - Vector2(32,32)) / 64
 			var mouse = get_global_mouse_position() / 64
 			playerpos.x = floor(playerpos.x)
 			playerpos.y = floor(playerpos.y)
@@ -65,8 +68,9 @@ func _physics_process(delta):
 			if mouse.x < 0 || mouse.x > maxX:
 				valid = false
 			
-			for player in players:
-				var ppos = (player.position - Vector2(32,32)) / 64
+			
+			for p in players:
+				var ppos = (p.position - Vector2(32,32)) / 64
 				ppos.x = floor(ppos.x)
 				ppos.y = floor(ppos.y)
 				if (mouse == ppos):
@@ -76,15 +80,18 @@ func _physics_process(delta):
 			
 			var newpath = astar.get_point_path(playerpos.y * (maxX + 1) + playerpos.x, mouse.y * (maxX + 1) + mouse.x)
 			
-			if len(newpath) < 2:
+			if len(newpath) < 2 || len(newpath) * player.walkTime > maxTurnTime:
 				valid = false
 				
 			if valid:
+				$Cursor.validTile()
 				path = newpath
 				arrived = false
 				t = 0
 				u = 0
-		
+			else:
+				$Cursor.invalidTile()
+			
 		if Input.is_action_just_pressed("shoot"):
 			var player = players[currentPlayer]
 			var gunpath = player.get_node("Gunpath")
@@ -104,9 +111,6 @@ func _physics_process(delta):
 			laser.position = gunpath.position
 			
 			
-			if (gunpath.is_colliding()):
-				print('target')
-			
 		
 		
 	if !arrived:
@@ -120,5 +124,6 @@ func _physics_process(delta):
 				arrived = true
 				currentPlayer = (currentPlayer + 1) % len(players)
 				$Camera.warpToPosition(players[currentPlayer].position)
+				$Cursor.enableCursor()
 				
 
