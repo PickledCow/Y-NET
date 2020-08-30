@@ -20,6 +20,7 @@ shadow_item_cull_mask = 0
 
 [node name="EnemyLight" type="Light2D" parent="."]
 position = Vector2( -288, 32 )
+enabled = false
 texture = ExtResource( 2 )
 texture_scale = 3.0
 energy = 0.0

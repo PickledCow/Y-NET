@@ -45,6 +45,7 @@ func _ready():
 	path = astar.get_point_path(maxX + 2, maxX + 2)	
 	for child in $Players.get_children():
 		players.append(child)
+	$Camera.warpToPosition(players[currentPlayer].position)
 		
 var t = 0
 var u = 0
