@@ -1,5 +1,9 @@
 extends Node2D
 
-var shootRange = 20
+var knockedOut = false
+var dead = false
 
-var walkTime = 15
+var health = 5
+
+var shootRange = 20
+var walkTime = 1

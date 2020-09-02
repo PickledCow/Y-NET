@@ -41,3 +41,8 @@ func validTile():
 
 func enableCursor():
 	canUpdate = true
+	modulate = Color(1,1,1,1)
+
+func disableCursor():
+	canUpdate = false
+	modulate = Color(1,1,1,0)

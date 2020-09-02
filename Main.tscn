@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://scripts/main.gd" type="Script" id=1]
 [ext_resource path="res://testworld.tscn" type="PackedScene" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://objects/BasicEnemy.tscn" type="PackedScene" id=5]
 [ext_resource path="res://sprites/world/cursor.png" type="Texture" id=6]
 [ext_resource path="res://scripts/Cursor.gd" type="Script" id=7]
+[ext_resource path="res://sprites/world/outline.png" type="Texture" id=8]
 
 [sub_resource type="Environment" id=1]
 background_mode = 4
@@ -14,6 +15,18 @@ tonemap_mode = 1
 dof_blur_far_distance = 0.01
 glow_enabled = true
 glow_hdr_threshold = 4.0
+
+[sub_resource type="TileSet" id=2]
+0/name = "outline.png 0"
+0/texture = ExtResource( 8 )
+0/tex_offset = Vector2( 0, 0 )
+0/modulate = Color( 1, 1, 1, 1 )
+0/region = Rect2( 0, 0, 64, 64 )
+0/tile_mode = 0
+0/occluder_offset = Vector2( 0, 0 )
+0/navigation_offset = Vector2( 0, 0 )
+0/shapes = [  ]
+0/z_index = 0
 
 [node name="main" type="Node2D"]
 script = ExtResource( 1 )
@@ -28,6 +41,14 @@ collision_layer = 3
 collision_mask = 0
 occluder_light_mask = 3
 
+[node name="Outline" type="TileMap" parent="."]
+light_mask = 0
+tile_set = SubResource( 2 )
+collision_layer = 0
+collision_mask = 0
+occluder_light_mask = 0
+format = 1
+
 [node name="Players" type="Node2D" parent="."]
 
 [node name="1" parent="Players" instance=ExtResource( 3 )]
@@ -40,10 +61,10 @@ position = Vector2( 1248, 160 )
 position = Vector2( 1120, 480 )
 
 [node name="4" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 1120, 224 )
+position = Vector2( 1120, 800 )
 
 [node name="5" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 864, 736 )
+position = Vector2( 1184, 928 )
 
 [node name="Enemies" type="Node2D" parent="."]
 light_mask = 0
@@ -52,10 +73,10 @@ light_mask = 0
 position = Vector2( 736, 224 )
 
 [node name="2" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1440, 96 )
+position = Vector2( 1504, 96 )
 
 [node name="3" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1376, 544 )
+position = Vector2( 992, 992 )
 
 [node name="4" parent="Enemies" instance=ExtResource( 5 )]
 position = Vector2( 1696, 992 )
