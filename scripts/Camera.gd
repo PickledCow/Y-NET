@@ -1,5 +1,8 @@
 extends Camera2D
 
+
+const cameraCentreOffset = Vector2(-200,0)
+
 var freeMove = true
 var targetPosition = Vector2()
 var targetReached = true
@@ -26,7 +29,7 @@ func _process(delta):
 			position += (mouseLastPosition - get_viewport().get_mouse_position()) * zoom.x
 			mouseLastPosition = get_viewport().get_mouse_position()
 		
-		position = Vector2(clamp(position.x, -offset.x, get_parent().maxX*64 - offset.x),clamp(position.y, -offset.y, get_parent().maxY*64 - offset.y))
+		position = Vector2(clamp(position.x, -offset.x - cameraCentreOffset.x, get_parent().maxX*64 - offset.x - cameraCentreOffset.x),clamp(position.y, -offset.y - cameraCentreOffset.y, get_parent().maxY*64 - offset.y - cameraCentreOffset.y))
 	
 	if !targetReached:
 		position = position.linear_interpolate(targetPosition, exp(-88 * delta))

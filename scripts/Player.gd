@@ -6,4 +6,4 @@ var dead = false
 var health = 5
 
 var shootRange = 20
-var walkTime = 1
+var walkTime = 5

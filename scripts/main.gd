@@ -1,10 +1,14 @@
 extends Node2D
 
+# Constraints of the cursor effectiveness
+const cursorRange = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
+
 onready var tilemap = get_node("TileMap")
 onready var mapoutline = get_node("Outline")
 
 var maxTurnTime = 100
 var currentTurnTime = 100
+onready var HUDNode = get_node("HUD")
 
 var maxX = 0
 var maxY = 0
@@ -120,6 +124,7 @@ func isPathValid(path):
 	return true
 
 var acting = false
+var turnEnd = false
 var isPlayerTurn = true
 var allPlayersDead = false
 var allEnemiesDead = false
@@ -140,9 +145,14 @@ func _physics_process(delta):
 			elif enemyWalking:
 				move_actor(enemies[currentEnemy])
 
+func _input(event):
+	if event == InputEventMouseButton and event.pressed:
+		if event.button_index:
+			pass
+
 func choose_dest_current_player():
 	var valid = true
-	if Input.is_action_just_pressed("click"):
+	if Input.is_action_just_pressed("click") && cursorRange.has_point(get_viewport().get_mouse_position()):
 		var player = players[currentPlayer]
 		var playerpos = (player.position - Vector2(32,32)) / 64
 		var mouse = get_global_mouse_position() / 64
@@ -175,7 +185,7 @@ func choose_dest_current_player():
 		if len(newpath) < 2:
 			valid = false
 			
-		if (len(newpath)-1) * player.walkTime > maxTurnTime:
+		if (len(newpath)-1) * player.walkTime > currentTurnTime:
 			tooFar = true
 			
 		if mouse.x < 0 || mouse.x > maxX:
@@ -185,10 +195,10 @@ func choose_dest_current_player():
 			$Cursor.validTile()
 			path = newpath
 			acting = true
-			t = 0
-			u = 0
+			currentTurnTime -= (len(newpath)-1) * player.walkTime
+			HUDNode.updateTimeBar(currentTurnTime, maxTurnTime)
 		else:
-			$Cursor.invalidTile(len(newpath)-1, maxTurnTime / player.walkTime, !valid, occupied, tooFar)
+			$Cursor.invalidTile(len(newpath)-1, currentTurnTime / player.walkTime, !valid, occupied, tooFar)
 		
 func shoot_current_player():
 	if Input.is_action_just_pressed("shoot"):
@@ -213,6 +223,7 @@ var t = 0 # Timer walking between the tiles (micro scope)
 var u = 0 # Tiemr walking through the tiles (macro scope)
 	
 func move_actor(actor):
+	HUDNode.disableUI()
 	$Camera.warpToPosition(actor.position)
 	actor.position = (path[u] * 64 ).linear_interpolate(path[u+1] * 64 , t) + Vector2(32,32)
 	t += 0.1
@@ -224,45 +235,59 @@ func move_actor(actor):
 	
 func endTurn():
 	acting = false
-
-	if !isPlayerTurn:
-		var startingPlayer = currentPlayer
-		currentPlayer = (currentPlayer + 1) % len(players)
-		while players[currentPlayer].dead:
-			currentPlayer = (currentPlayer + 1) % len(players)
-			if currentPlayer == startingPlayer:
-				allPlayersDead = true
-				print("gameover")
-				break
-
-		$Camera.warpToPosition(players[currentPlayer].position)
-		$Cursor.enableCursor()
-	else:
-		enemyWalking = false
-		
-		var startingEnemy = currentEnemy
-		currentEnemy = (currentEnemy + 1) % len(enemies)
-		while enemies[currentEnemy].dead:
-			currentEnemy = (currentEnemy + 1) % len(enemies)
-			if currentEnemy == startingEnemy:
-				allEnemiesDead = true
-				print("ct win")
-				break
-				
-		$Camera.warpToPosition(enemies[currentEnemy].position)
-		$Cursor.disableCursor()
 	
-	isPlayerTurn = !isPlayerTurn
+	if currentTurnTime == 0:
+		turnEnd = true
+	
+	if turnEnd:
+		turnEnd = false
+		if !isPlayerTurn:
+			var startingPlayer = currentPlayer
+			currentPlayer = (currentPlayer + 1) % len(players)
+			while players[currentPlayer].dead:
+				currentPlayer = (currentPlayer + 1) % len(players)
+				if currentPlayer == startingPlayer:
+					allPlayersDead = true
+					print("gameover")
+					break
+	
+			$Camera.warpToPosition(players[currentPlayer].position)
+			$Cursor.enableCursor()
+			HUDNode.enableUI()
+		else:
+			enemyWalking = false
+			
+			var startingEnemy = currentEnemy
+			currentEnemy = (currentEnemy + 1) % len(enemies)
+			while enemies[currentEnemy].dead:
+				currentEnemy = (currentEnemy + 1) % len(enemies)
+				if currentEnemy == startingEnemy:
+					allEnemiesDead = true
+					print("ct win")
+					break
+					
+			$Camera.warpToPosition(enemies[currentEnemy].position)
+			$Cursor.disableCursor()
+			HUDNode.disableUI()
+		
+		isPlayerTurn = !isPlayerTurn
+		
+		currentTurnTime = maxTurnTime
+	else:
+		if isPlayerTurn:
+			$Cursor.enableCursor()
+			HUDNode.enableUI()
 	
 	t = 0
 	u = 0
+	
+	HUDNode.updateTimeBar(currentTurnTime, maxTurnTime)
 
 func current_enemy_move():
 	var enemy = enemies[currentEnemy]
-	var endOfTurn = false
-	while !endOfTurn:
+	while !turnEnd:
 		var move = enemy.chooseMove(self)
-		endOfTurn = move[2]
+		turnEnd = move[2]
 		match move[0]:
 			"move":
 				if isPathValid(move):
@@ -270,9 +295,16 @@ func current_enemy_move():
 					acting = true
 					enemyWalking = true
 			_:
-				endOfTurn = true
+				turnEnd = true
 				endTurn()
 	
 
 	
 	
+
+
+func skipTurnPressed():
+	if isPlayerTurn && !acting:
+		turnEnd = true
+		endTurn()
+

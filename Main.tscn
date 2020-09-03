@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=22 format=2]
 
 [ext_resource path="res://scripts/main.gd" type="Script" id=1]
 [ext_resource path="res://testworld.tscn" type="PackedScene" id=2]
@@ -8,6 +8,15 @@
 [ext_resource path="res://sprites/world/cursor.png" type="Texture" id=6]
 [ext_resource path="res://scripts/Cursor.gd" type="Script" id=7]
 [ext_resource path="res://sprites/world/outline.png" type="Texture" id=8]
+[ext_resource path="res://front/UI.png" type="Texture" id=9]
+[ext_resource path="res://fonts/BRLNSR.TTF" type="DynamicFontData" id=10]
+[ext_resource path="res://miscres/face.tres" type="Theme" id=11]
+[ext_resource path="res://front/ProgressBarOver.png" type="Texture" id=12]
+[ext_resource path="res://scripts/HUD.gd" type="Script" id=13]
+[ext_resource path="res://front/SkipTurnDisable.png" type="Texture" id=14]
+[ext_resource path="res://front/SkipTurnPressed.png" type="Texture" id=15]
+[ext_resource path="res://front/SkipTurnHover.png" type="Texture" id=16]
+[ext_resource path="res://front/SkipTurnDefault.png" type="Texture" id=17]
 
 [sub_resource type="Environment" id=1]
 background_mode = 4
@@ -28,8 +37,21 @@ glow_hdr_threshold = 4.0
 0/shapes = [  ]
 0/z_index = 0
 
+[sub_resource type="CanvasItemMaterial" id=3]
+blend_mode = 1
+
+[sub_resource type="DynamicFont" id=4]
+size = 48
+outline_size = 3
+outline_color = Color( 0, 0, 0, 1 )
+use_filter = true
+font_data = ExtResource( 10 )
+
 [node name="main" type="Node2D"]
 script = ExtResource( 1 )
+__meta__ = {
+"_edit_vertical_guides_": [ 1696.0 ]
+}
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource( 1 )
@@ -93,3 +115,51 @@ scale = Vector2( 4, 4 )
 texture = ExtResource( 6 )
 centered = false
 script = ExtResource( 7 )
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource( 13 )
+
+[node name="UIBG" type="TextureRect" parent="HUD"]
+light_mask = 0
+margin_right = 40.0
+margin_bottom = 1080.0
+texture = ExtResource( 9 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TimeBar" type="TextureProgress" parent="HUD"]
+material = SubResource( 3 )
+margin_left = 1636.0
+margin_top = 36.0
+margin_right = 1892.0
+margin_bottom = 100.0
+theme = ExtResource( 11 )
+value = 100.0
+texture_progress = ExtResource( 12 )
+
+[node name="TimeText" type="RichTextLabel" parent="HUD"]
+margin_left = 1644.0
+margin_top = 36.0
+margin_right = 1900.0
+margin_bottom = 100.0
+rect_clip_content = false
+custom_fonts/normal_font = SubResource( 4 )
+bbcode_enabled = true
+bbcode_text = "100 / 100"
+text = "100 / 100"
+scroll_active = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SkipTurnButton" type="TextureButton" parent="HUD"]
+margin_left = 1504.0
+margin_top = 864.0
+margin_right = 1904.0
+margin_bottom = 1064.0
+texture_normal = ExtResource( 17 )
+texture_pressed = ExtResource( 15 )
+texture_hover = ExtResource( 16 )
+texture_disabled = ExtResource( 14 )
+[connection signal="pressed" from="HUD/SkipTurnButton" to="." method="skipTurnPressed"]
