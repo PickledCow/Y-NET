@@ -1,6 +1,5 @@
 extends Camera2D
 
-
 const CAMERA_CENTRE_OFFSET = Vector2(-200,0)
 
 var free_move = true

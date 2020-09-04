@@ -1,7 +1,5 @@
 extends Node2D
 
-# Constraints of the cursor effectiveness
-const CURSOR_RANGE = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
 
 onready var tilemap = get_node("TileMap")
 onready var mapoutline = get_node("Outline")
@@ -175,7 +173,7 @@ func _physics_process(delta):
 # Player input
 func _input(event):
 	# Check if we are allowed to click (not acting, player still alive, plyer turn, cursor in range)
-	if action == CONSTS.ACTION.IDLE && !all_players_dead && is_player_turn && CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
+	if action == CONSTS.ACTION.IDLE && !all_players_dead && is_player_turn && CONSTS.CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
 		if event is InputEventMouseButton and event.pressed:
 			match event.button_index:
 				BUTTON_LEFT:

@@ -1,8 +1,5 @@
 extends Sprite
 
-# Constraints of the cursor effectiveness
-const CURSOR_RANGE = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
-
 var red_fade_timer = 0
 var red_fade_time = 1
 
@@ -10,7 +7,7 @@ var can_update = true
 
 func _process(delta):
 	if can_update:
-		if CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
+		if CONSTS.CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
 			var mouse = get_global_mouse_position() / 64
 			mouse.x = floor(mouse.x)
 			mouse.y = floor(mouse.y)
