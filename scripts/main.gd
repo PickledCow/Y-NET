@@ -8,21 +8,21 @@ onready var mapoutline = get_node("Outline")
 
 var max_turn_time = 100
 var current_turn_time = 100
-onready var HUD_node = get_node("HUD")
 
+onready var HUD_node = get_node("HUD")
 onready var cursor = get_node("Cursor")
 onready var camera = get_node("Camera")
 onready var arrow_cursor = get_node("CurrentPlayerArrow")
+
+# -------------------Initialisation Functions--------------------------------- #
 
 var maxX = 0
 var maxY = 0
 var astar
 var path
 
-# Popup text prefab
-var bubble_text_prefab = preload("res://objects/PopupText.tscn")
-
-func generate_AStar_and_outline():
+# Find bounds of the map, generate AStar, and create outline of the world
+func initialise_board():
 	# Find bounds first
 	maxX = 0
 	maxY = 0
@@ -58,17 +58,6 @@ func generate_AStar_and_outline():
 	
 	return astar
 
-# text: the text of the text (lel); pos: where to spawn the text; disco: optional, makes the text go crazy
-func create_bubble_text(text, pos, disco=false):
-	var bubble_text = bubble_text_prefab.instance()
-	var display_text = ''
-	if disco: display_text += '[rainbow freq=0.1][wave amp=256 freq=12]'
-	display_text += text
-	bubble_text.init(display_text, pos)
-	add_child(bubble_text)
-
-
-
 var players = []
 var current_player = 0
 
@@ -77,7 +66,7 @@ var current_enemy = -1
 
 
 func _ready():
-	astar = generate_AStar_and_outline()
+	astar = initialise_board()
 	for child in $Players.get_children():
 		players.append(child)
 	for child in $Enemies.get_children():
@@ -86,8 +75,10 @@ func _ready():
 	camera.set_target(players[current_player])
 	arrow_cursor.set_target(players[current_player])
 
-# Check if tile isn't obstructed, the master tile check function, 
-# call this function most of the time but feel free to call the others as well
+# ---------------------------Tool Functions----------------------------------- #
+
+# Check if tile isn't obstructed, the master tile check function, call this
+# function most of the time but feel free to call the others if required
 func is_tile_free(x, y):
 	var valid = true
 	if !is_tile_in_bound(x, y):
@@ -97,6 +88,7 @@ func is_tile_free(x, y):
 	if is_tile_occupied(x, y):
 		valid = false
 	return valid
+
 
 func is_tile_in_bound(x, y):
 	var valid = true
@@ -128,30 +120,55 @@ func is_tile_occupied(x, y):
 func is_path_valid(path):
 	return true
 
-var acting = false
-var turn_end = false
+# ---------------------------Object Spawning Functions------------------------ #
+
+# Popup text prefab
+var bubble_text_prefab = preload("res://objects/PopupText.tscn")
+
+
+# text: the text of the text (lel); pos: where to spawn the text; disco: optional, makes the text go crazy
+func create_bubble_text(text, pos, disco=false):
+	var bubble_text = bubble_text_prefab.instance()
+	var display_text = ''
+	if disco: display_text += '[rainbow freq=0.1][wave amp=256 freq=12]'
+	display_text += text
+	bubble_text.init(display_text, pos)
+	add_child(bubble_text)
+
+
+# ---------------------------Main Functions----------------------------------- #
+
+enum {IDLE, WALKING, SHOOTING}
+var action = IDLE # Current action being performed, refer to enum above
+
+var turn_end = false # If the player or enemy has declared that they have made their final move
 var is_player_turn = true
 var all_players_dead = false
 var all_enemies_dead = false
 
-var enemy_walking = false
 
+# Main loop
 func _physics_process(delta):
-	if !all_players_dead:
+	if !all_players_dead && !all_enemies_dead:
 		if is_player_turn:
-			if acting:
-				move_actor(players[current_player])
-		else:
-			if !acting:
-				current_enemy_move()
-			if enemy_walking:
-				move_actor(enemies[current_enemy])
+			match action:
+				WALKING:
+					move_actor(players[current_player])
+		elif !is_player_turn:
+			match action:
+				IDLE:
+					current_enemy_move()
+				WALKING:
+					move_actor(enemies[current_enemy])
 
+# Player input
 func _input(event):
-	if !acting && !all_players_dead && is_player_turn && CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
+	# Check if we are allowed to click (not acting, player still alive, plyer turn, cursor in range)
+	if action == IDLE && !all_players_dead && is_player_turn && CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
 		if event is InputEventMouseButton and event.pressed:
-			if event.button_index == BUTTON_LEFT:
-				choose_dest_current_player()
+			match event.button_index:
+				BUTTON_LEFT:
+					choose_dest_current_player()
 
 func choose_dest_current_player():
 	var valid = true
@@ -196,9 +213,10 @@ func choose_dest_current_player():
 	if valid && !too_far && !occupied:
 		cursor.valid_tile()
 		path = newpath
-		acting = true
+		action = WALKING
 		current_turn_time -= (len(newpath)-1) * player.walk_time
 		HUD_node.update_time_bar(current_turn_time, max_turn_time)
+		start_move(players[current_player])
 	else:
 		cursor.invalid_tile(len(newpath)-1, current_turn_time / player.walk_time, !valid, occupied, too_far)
 		
@@ -221,15 +239,19 @@ func shoot_current_player():
 		
 		laser.position = gunpath.position
 
-var t = 0 # Timer walking between the tiles (micro scope)
-var u = 0 # Tiemr walking through the tiles (macro scope)
-	
-func move_actor(actor):
+var t = 0 # Timer walking between the tiles (micro scope) [0 <= t <= 1]
+var u = 0 # Timer walking through the tiles (macro scope) [0 <= u]
+
+func start_move(actor):
+	t = 0
+	u = 0
 	HUD_node.disable_UI()
 	if is_player_turn:
 		camera.set_target(actor)
 		arrow_cursor.set_target(actor)
-	actor.position = (path[u] * 64 ).linear_interpolate(path[u+1] * 64 , t) + Vector2(32,32)
+
+func move_actor(actor):
+	actor.position = (path[u] * 64).linear_interpolate(path[u+1] * 64 , t) + Vector2(32,32)
 	t += 0.1
 	if t >= 1:
 		t -= 1;
@@ -238,15 +260,13 @@ func move_actor(actor):
 			end_turn()
 	
 func end_turn():
-	acting = false
+	action = IDLE
 	
 	if current_turn_time == 0:
 		turn_end = true
 	
 	if turn_end:
 		if is_player_turn:
-			enemy_walking = false
-			
 			var starting_enemy = current_enemy
 			current_enemy = (current_enemy + 1) % len(enemies)
 			while enemies[current_enemy].dead:
@@ -283,28 +303,27 @@ func end_turn():
 		arrow_cursor.set_target(players[current_player])
 		arrow_cursor.show()
 		HUD_node.enable_UI()
-
-	t = 0
-	u = 0
 	
 	HUD_node.update_time_bar(current_turn_time, max_turn_time)
+
+enum {WALK, RUN, SHOOT, CROUCH}
 
 func current_enemy_move():
 	var enemy = enemies[current_enemy]
 	var move = enemy.choose_move(self)
 	turn_end = move[2]
 	match move[0]:
-		"move":
+		WALK:
 			if is_path_valid(move):
 				path = move[1]
-				acting = true
-				enemy_walking = true
+				action = WALKING
+				start_move(enemies[current_enemy])
 		_:
 			turn_end = true
 			end_turn()
 	
 
 func skip_turn_pressed():
-	if is_player_turn && !acting:
+	if is_player_turn && action == IDLE:
 		turn_end = true
 		end_turn()
