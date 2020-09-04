@@ -1,0 +1,5 @@
+extends Node
+
+enum ACTION {IDLE, WALKING, SHOOTING}
+
+enum ENEMY_ACTION {WALK, RUN, SHOOT, CROUCH}

@@ -1,14 +1,12 @@
 extends Node2D
 
-enum {WALK, RUN, SHOOT, CROUCH}
-
 var knocked_out = false
 var dead = false
 
 var health = 5
 
 var shoot_range = 20
-var walk_time = 4
+var walk_time = 10
 
 # Dummy AI
 # If you submit an invalid move, the enemy will skip their turn
@@ -22,12 +20,16 @@ func choose_move(root):
 	pos.y = floor(pos.y)
 	# We try 10 times and if we fail we just give up
 	for i in range(10):
-		var distance = randi() % (root.current_turn_time / walk_time - 1) + 1
+		var distance = 0
+		if root.current_turn_time / walk_time - 1 == 0:
+			distance = 1
+		else:
+			distance = randi() % (root.current_turn_time / walk_time - 1) + 1
 		var x = ((randi()%2)*2-1) * (randi() % distance)
 		var y = ((randi()%2)*2-1) * (distance - abs(x))
 		var path = root.astar.get_point_path(pos.y * (root.maxX + 1) + pos.x, (pos.y + y) * (root.maxX + 1) + (pos.x + x))
 		if len(path) >= 2 && len(path) <= root.current_turn_time / walk_time + 1 && root.is_tile_free(pos.x + x, pos.y + y):
-			return [WALK, path, true]
+			return [CONSTS.ENEMY_ACTION.WALK, path, false]
 	root.create_bubble_text("[center][shake rate=25 level=30]I'm lost :(", position, false)
 	return [null, null, true]
 			

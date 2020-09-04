@@ -19,6 +19,10 @@ config/name="Y-NET"
 run/main_scene="res://Main.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+CONSTS="*res://scripts/Constants.gd"
+
 [display]
 
 window/size/width=1920

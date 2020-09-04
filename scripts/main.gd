@@ -116,10 +116,22 @@ func is_tile_occupied(x, y):
 			break
 	return valid
 
-# TODO, actually verify path
-func is_path_valid(path):
-	return true
-
+func is_path_valid(path, walk_time):
+	var valid = true
+	
+	if len(path) < 2:
+		valid = false
+	elif len(path) > current_turn_time / walk_time:
+		valid = false
+	elif !is_tile_floor(path[-1].x, path[-1].y):
+		valid = false
+	for e in players + enemies:	
+		if ((e.position - Vector2(32,32)) / 64) == path[-1]:
+			valid = false
+			break
+	return valid
+	
+	
 # ---------------------------Object Spawning Functions------------------------ #
 
 # Popup text prefab
@@ -138,8 +150,7 @@ func create_bubble_text(text, pos, disco=false):
 
 # ---------------------------Main Functions----------------------------------- #
 
-enum {IDLE, WALKING, SHOOTING}
-var action = IDLE # Current action being performed, refer to enum above
+var action = CONSTS.ACTION.IDLE # Current action being performed, refer to enums in Constants above
 
 var turn_end = false # If the player or enemy has declared that they have made their final move
 var is_player_turn = true
@@ -152,19 +163,19 @@ func _physics_process(delta):
 	if !all_players_dead && !all_enemies_dead:
 		if is_player_turn:
 			match action:
-				WALKING:
+				CONSTS.ACTION.WALKING:
 					move_actor(players[current_player])
 		elif !is_player_turn:
 			match action:
-				IDLE:
+				CONSTS.ACTION.IDLE:
 					current_enemy_move()
-				WALKING:
+				CONSTS.ACTION.WALKING:
 					move_actor(enemies[current_enemy])
 
 # Player input
 func _input(event):
 	# Check if we are allowed to click (not acting, player still alive, plyer turn, cursor in range)
-	if action == IDLE && !all_players_dead && is_player_turn && CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
+	if action == CONSTS.ACTION.IDLE && !all_players_dead && is_player_turn && CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
 		if event is InputEventMouseButton and event.pressed:
 			match event.button_index:
 				BUTTON_LEFT:
@@ -213,7 +224,7 @@ func choose_dest_current_player():
 	if valid && !too_far && !occupied:
 		cursor.valid_tile()
 		path = newpath
-		action = WALKING
+		action = CONSTS.ACTION.WALKING
 		current_turn_time -= (len(newpath)-1) * player.walk_time
 		HUD_node.update_time_bar(current_turn_time, max_turn_time)
 		start_move(players[current_player])
@@ -260,7 +271,7 @@ func move_actor(actor):
 			end_turn()
 	
 func end_turn():
-	action = IDLE
+	action = CONSTS.ACTION.IDLE
 	
 	if current_turn_time == 0:
 		turn_end = true
@@ -303,27 +314,31 @@ func end_turn():
 		arrow_cursor.set_target(players[current_player])
 		arrow_cursor.show()
 		HUD_node.enable_UI()
-	
-	HUD_node.update_time_bar(current_turn_time, max_turn_time)
-
-enum {WALK, RUN, SHOOT, CROUCH}
+		HUD_node.update_time_bar(current_turn_time, max_turn_time)
 
 func current_enemy_move():
+	var valid_move = false
+	
 	var enemy = enemies[current_enemy]
 	var move = enemy.choose_move(self)
 	turn_end = move[2]
 	match move[0]:
-		WALK:
-			if is_path_valid(move):
+		CONSTS.ENEMY_ACTION.WALK:
+			if is_path_valid(move[1], current_turn_time / enemies[current_enemy].walk_time):
+				valid_move = true
 				path = move[1]
-				action = WALKING
+				current_turn_time -= enemies[current_enemy].walk_time * (len(path) - 1)
+				action = CONSTS.ACTION.WALKING
 				start_move(enemies[current_enemy])
-		_:
-			turn_end = true
-			end_turn()
-	
+			
+			
+	if !valid_move:
+		turn_end = true
+		action = CONSTS.ACTION.IDLE
+		end_turn()
+
 
 func skip_turn_pressed():
-	if is_player_turn && action == IDLE:
+	if is_player_turn && action == CONSTS.ACTION.IDLE:
 		turn_end = true
 		end_turn()
