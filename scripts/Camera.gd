@@ -1,18 +1,18 @@
 extends Camera2D
 
 
-const cameraCentreOffset = Vector2(-200,0)
+const CAMERA_CENTRE_OFFSET = Vector2(-200,0)
 
-var freeMove = true
-var targetPosition = Vector2()
-var targetReached = true
+var free_move = true
+var target_actor
+var target_reached = true
 
-var mouseLastPosition = Vector2()
+var mouse_last_position = Vector2()
 
 func _process(delta):
 	$AmbientLight.scale = zoom
 	$AmbientLight.position = offset
-	if freeMove:
+	if free_move:
 		var move = Vector2()
 		if Input.is_action_pressed("cameraUp"): move.y -= 1
 		if Input.is_action_pressed("cameraDown"): move.y += 1
@@ -23,21 +23,21 @@ func _process(delta):
 		position += move * 1000 * delta * sqrt(zoom.x)
 		
 		if Input.is_action_just_pressed("cameraDrag"):
-			mouseLastPosition = get_viewport().get_mouse_position()
+			mouse_last_position = get_viewport().get_mouse_position()
 		
 		if Input.is_action_pressed("cameraDrag"):
-			position += (mouseLastPosition - get_viewport().get_mouse_position()) * zoom.x
-			mouseLastPosition = get_viewport().get_mouse_position()
+			position += (mouse_last_position - get_viewport().get_mouse_position()) * zoom.x
+			mouse_last_position = get_viewport().get_mouse_position()
 		
-		position = Vector2(clamp(position.x, -offset.x - cameraCentreOffset.x, get_parent().maxX*64 - offset.x - cameraCentreOffset.x),clamp(position.y, -offset.y - cameraCentreOffset.y, get_parent().maxY*64 - offset.y - cameraCentreOffset.y))
+		position = Vector2(clamp(position.x, -offset.x - CAMERA_CENTRE_OFFSET.x, get_parent().maxX*64 - offset.x - CAMERA_CENTRE_OFFSET.x),clamp(position.y, -offset.y - CAMERA_CENTRE_OFFSET.y, get_parent().maxY*64 - offset.y - CAMERA_CENTRE_OFFSET.y))
 	
-	if !targetReached:
-		position = position.linear_interpolate(targetPosition, exp(-88 * delta))
+	if !target_reached:
+		position = position.linear_interpolate(target_actor.position, exp(-88 * delta))
 		
-		if position.distance_squared_to(targetPosition) < 100:
-			position = targetPosition
-			targetReached = true
-			freeMove = true
+		if position.distance_squared_to(target_actor.position) < 100:
+			position = target_actor.position
+			target_reached = true
+			free_move = true
 
 func _input(event):
 	if event is InputEventMouseButton and event.pressed:
@@ -63,9 +63,11 @@ func _input(event):
 				offset *= multiplier
 
 
-func warpToPosition(position):
-	targetPosition = position
-	targetReached = false
+func set_target(target):
+	target_actor = target
+	target_reached = false
 	self.position += offset
 	offset = Vector2(0, 0)
-	freeMove = false
+	free_move = false
+
+

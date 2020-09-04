@@ -1,14 +1,18 @@
 extends Node2D
 
 # Constraints of the cursor effectiveness
-const cursorRange = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
+const CURSOR_RANGE = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
 
 onready var tilemap = get_node("TileMap")
 onready var mapoutline = get_node("Outline")
 
-var maxTurnTime = 100
-var currentTurnTime = 100
-onready var HUDNode = get_node("HUD")
+var max_turn_time = 100
+var current_turn_time = 100
+onready var HUD_node = get_node("HUD")
+
+onready var cursor = get_node("Cursor")
+onready var camera = get_node("Camera")
+onready var arrow_cursor = get_node("CurrentPlayerArrow")
 
 var maxX = 0
 var maxY = 0
@@ -16,9 +20,9 @@ var astar
 var path
 
 # Popup text prefab
-var bubbleTextPrefab = preload("res://objects/PopupText.tscn")
+var bubble_text_prefab = preload("res://objects/PopupText.tscn")
 
-func generateAStarAndOutline():
+func generate_AStar_and_outline():
 	# Find bounds first
 	maxX = 0
 	maxY = 0
@@ -55,45 +59,46 @@ func generateAStarAndOutline():
 	return astar
 
 # text: the text of the text (lel); pos: where to spawn the text; disco: optional, makes the text go crazy
-func createBubbleText(text, pos, disco=false):
-	var bubbleText = bubbleTextPrefab.instance()
-	var displayText = ''
-	if disco: displayText += '[rainbow freq=0.1][wave amp=256 freq=12]'
-	displayText += text
-	bubbleText.init(displayText, pos)
-	add_child(bubbleText)
+func create_bubble_text(text, pos, disco=false):
+	var bubble_text = bubble_text_prefab.instance()
+	var display_text = ''
+	if disco: display_text += '[rainbow freq=0.1][wave amp=256 freq=12]'
+	display_text += text
+	bubble_text.init(display_text, pos)
+	add_child(bubble_text)
 
 
 
 var players = []
-var currentPlayer = 0
+var current_player = 0
 
 var enemies = []
-var currentEnemy = 0
+var current_enemy = -1
 
 
 func _ready():
-	astar = generateAStarAndOutline()
+	astar = generate_AStar_and_outline()
 	for child in $Players.get_children():
 		players.append(child)
 	for child in $Enemies.get_children():
 		enemies.append(child)
 		
-	$Camera.warpToPosition(players[currentPlayer].position)
+	camera.set_target(players[current_player])
+	arrow_cursor.set_target(players[current_player])
 
 # Check if tile isn't obstructed, the master tile check function, 
 # call this function most of the time but feel free to call the others as well
-func isTileFree(x, y):
+func is_tile_free(x, y):
 	var valid = true
-	if !isTileInBound(x, y):
+	if !is_tile_in_bound(x, y):
 		valid = false
-	if !isTileFloor(x, y):
+	if !is_tile_floor(x, y):
 		valid = false
-	if isTileOccupied(x, y):
+	if is_tile_occupied(x, y):
 		valid = false
 	return valid
 
-func isTileInBound(x, y):
+func is_tile_in_bound(x, y):
 	var valid = true
 	if x < 0 || x > maxX:
 		valid = false
@@ -101,13 +106,13 @@ func isTileInBound(x, y):
 		valid = false
 	return valid
 
-func isTileFloor(x, y):
+func is_tile_floor(x, y):
 	return tilemap.get_cell(x, y) in tilemap.floors
 
-func isTileWall(x, y):
+func is_tile_wall(x, y):
 	return tilemap.get_cell(x, y) in tilemap.walls
 
-func isTileOccupied(x, y):
+func is_tile_occupied(x, y):
 	var valid = false
 	
 	for i in players + enemies:
@@ -120,98 +125,95 @@ func isTileOccupied(x, y):
 	return valid
 
 # TODO, actually verify path
-func isPathValid(path):
+func is_path_valid(path):
 	return true
 
 var acting = false
-var turnEnd = false
-var isPlayerTurn = true
-var allPlayersDead = false
-var allEnemiesDead = false
+var turn_end = false
+var is_player_turn = true
+var all_players_dead = false
+var all_enemies_dead = false
 
-var enemyWalking = false
+var enemy_walking = false
 
 func _physics_process(delta):
-	if !allPlayersDead:
-		if isPlayerTurn:
-			if !acting:
-				choose_dest_current_player()
-				shoot_current_player()
-			else:
-				move_actor(players[currentPlayer])
+	if !all_players_dead:
+		if is_player_turn:
+			if acting:
+				move_actor(players[current_player])
 		else:
 			if !acting:
 				current_enemy_move()
-			elif enemyWalking:
-				move_actor(enemies[currentEnemy])
+			if enemy_walking:
+				move_actor(enemies[current_enemy])
 
 func _input(event):
-	if event == InputEventMouseButton and event.pressed:
-		if event.button_index:
-			pass
+	if !acting && !all_players_dead && is_player_turn && CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
+		if event is InputEventMouseButton and event.pressed:
+			if event.button_index == BUTTON_LEFT:
+				choose_dest_current_player()
 
 func choose_dest_current_player():
 	var valid = true
-	if Input.is_action_just_pressed("click") && cursorRange.has_point(get_viewport().get_mouse_position()):
-		var player = players[currentPlayer]
-		var playerpos = (player.position - Vector2(32,32)) / 64
-		var mouse = get_global_mouse_position() / 64
-		playerpos.x = floor(playerpos.x)
-		playerpos.y = floor(playerpos.y)
-		mouse.x = floor(mouse.x)
-		mouse.y = floor(mouse.y)
-		
-		var occupied = false
-		var tooFar = false
-		
-		for p in players:
-			var ppos = (p.position - Vector2(32,32)) / 64
-			ppos.x = floor(ppos.x)
-			ppos.y = floor(ppos.y)
-			if (mouse == ppos):
-				occupied = true
-				break
-		for p in enemies:
-			var ppos = (p.position - Vector2(32,32)) / 64
-			ppos.x = floor(ppos.x)
-			ppos.y = floor(ppos.y)
-			if (mouse == ppos):
-				valid = false
-				break
-			
-		
-		var newpath = astar.get_point_path(playerpos.y * (maxX + 1) + playerpos.x, mouse.y * (maxX + 1) + mouse.x)
-		
-		if len(newpath) < 2:
+	var player = players[current_player]
+	var playerpos = (player.position - Vector2(32,32)) / 64
+	var mouse = get_global_mouse_position() / 64
+	playerpos.x = floor(playerpos.x)
+	playerpos.y = floor(playerpos.y)
+	mouse.x = floor(mouse.x)
+	mouse.y = floor(mouse.y)
+	
+	var occupied = false
+	var too_far = false
+	
+	for p in players:
+		var ppos = (p.position - Vector2(32,32)) / 64
+		ppos.x = floor(ppos.x)
+		ppos.y = floor(ppos.y)
+		if (mouse == ppos):
+			occupied = true
+			break
+	for p in enemies:
+		var ppos = (p.position - Vector2(32,32)) / 64
+		ppos.x = floor(ppos.x)
+		ppos.y = floor(ppos.y)
+		if (mouse == ppos):
 			valid = false
-			
-		if (len(newpath)-1) * player.walkTime > currentTurnTime:
-			tooFar = true
-			
-		if mouse.x < 0 || mouse.x > maxX:
-			valid = false
+			break
 		
-		if valid && !tooFar && !occupied:
-			$Cursor.validTile()
-			path = newpath
-			acting = true
-			currentTurnTime -= (len(newpath)-1) * player.walkTime
-			HUDNode.updateTimeBar(currentTurnTime, maxTurnTime)
-		else:
-			$Cursor.invalidTile(len(newpath)-1, currentTurnTime / player.walkTime, !valid, occupied, tooFar)
+	
+	var newpath = astar.get_point_path(playerpos.y * (maxX + 1) + playerpos.x, mouse.y * (maxX + 1) + mouse.x)
+	
+	if len(newpath) < 2:
+		valid = false
+		
+	if (len(newpath)-1) * player.walk_time > current_turn_time:
+		too_far = true
+		
+	if mouse.x < 0 || mouse.x > maxX:
+		valid = false
+	
+	if valid && !too_far && !occupied:
+		cursor.valid_tile()
+		path = newpath
+		acting = true
+		current_turn_time -= (len(newpath)-1) * player.walk_time
+		HUD_node.update_time_bar(current_turn_time, max_turn_time)
+	else:
+		cursor.invalid_tile(len(newpath)-1, current_turn_time / player.walk_time, !valid, occupied, too_far)
 		
 func shoot_current_player():
 	if Input.is_action_just_pressed("shoot"):
-		var player = players[currentPlayer]
+		var player = players[current_player]
 		var gunpath = player.get_node("Gunpath")
 		gunpath.enabled = true
 		
-		var playerpos = players[currentPlayer].position
+		var playerpos = players[current_player].position
 		var mouse = get_global_mouse_position()
 		
 		var angle = playerpos.angle_to_point(mouse)
 		gunpath.position = -Vector2(cos(angle), sin(angle)) * 2
-		gunpath.cast_to = (mouse - playerpos - gunpath.position).normalized() * player.shootRange * 64
+		gunpath.cast_to = (mouse - playerpos - gunpath.position).normalized() * player.shoot_range * 64
 		
 		var laser = player.get_node("LaserSight")
 		
@@ -223,88 +225,86 @@ var t = 0 # Timer walking between the tiles (micro scope)
 var u = 0 # Tiemr walking through the tiles (macro scope)
 	
 func move_actor(actor):
-	HUDNode.disableUI()
-	$Camera.warpToPosition(actor.position)
+	HUD_node.disable_UI()
+	if is_player_turn:
+		camera.set_target(actor)
+		arrow_cursor.set_target(actor)
 	actor.position = (path[u] * 64 ).linear_interpolate(path[u+1] * 64 , t) + Vector2(32,32)
 	t += 0.1
 	if t >= 1:
 		t -= 1;
 		u += 1
 		if u == len(path) - 1:
-			endTurn()
+			end_turn()
 	
-func endTurn():
+func end_turn():
 	acting = false
 	
-	if currentTurnTime == 0:
-		turnEnd = true
+	if current_turn_time == 0:
+		turn_end = true
 	
-	if turnEnd:
-		turnEnd = false
-		if !isPlayerTurn:
-			var startingPlayer = currentPlayer
-			currentPlayer = (currentPlayer + 1) % len(players)
-			while players[currentPlayer].dead:
-				currentPlayer = (currentPlayer + 1) % len(players)
-				if currentPlayer == startingPlayer:
-					allPlayersDead = true
+	if turn_end:
+		if is_player_turn:
+			enemy_walking = false
+			
+			var starting_enemy = current_enemy
+			current_enemy = (current_enemy + 1) % len(enemies)
+			while enemies[current_enemy].dead:
+				current_enemy = (current_enemy + 1) % len(enemies)
+				if current_enemy == starting_enemy:
+					all_enemies_dead = true
+					print("ct win")
+					break
+			
+			#$Camera.warpToPosition(enemies[currentEnemy].position)
+			cursor.disable_cursor()
+			arrow_cursor.hide()
+			HUD_node.disable_UI()
+		
+		else:
+			
+			var starting_player = current_player
+			current_player = (current_player + 1) % len(players)
+			while players[current_player].dead:
+				current_player = (current_player + 1) % len(players)
+				if current_player == starting_player:
+					all_players_dead = true
 					print("gameover")
 					break
 	
-			$Camera.warpToPosition(players[currentPlayer].position)
-			$Cursor.enableCursor()
-			HUDNode.enableUI()
-		else:
-			enemyWalking = false
+			camera.set_target(players[current_player])
 			
-			var startingEnemy = currentEnemy
-			currentEnemy = (currentEnemy + 1) % len(enemies)
-			while enemies[currentEnemy].dead:
-				currentEnemy = (currentEnemy + 1) % len(enemies)
-				if currentEnemy == startingEnemy:
-					allEnemiesDead = true
-					print("ct win")
-					break
-					
-			$Camera.warpToPosition(enemies[currentEnemy].position)
-			$Cursor.disableCursor()
-			HUDNode.disableUI()
+		is_player_turn = !is_player_turn
+		current_turn_time = max_turn_time
+		turn_end = false
 		
-		isPlayerTurn = !isPlayerTurn
-		
-		currentTurnTime = maxTurnTime
-	else:
-		if isPlayerTurn:
-			$Cursor.enableCursor()
-			HUDNode.enableUI()
-	
+	if is_player_turn:
+		cursor.enable_cursor()
+		arrow_cursor.set_target(players[current_player])
+		arrow_cursor.show()
+		HUD_node.enable_UI()
+
 	t = 0
 	u = 0
 	
-	HUDNode.updateTimeBar(currentTurnTime, maxTurnTime)
+	HUD_node.update_time_bar(current_turn_time, max_turn_time)
 
 func current_enemy_move():
-	var enemy = enemies[currentEnemy]
-	while !turnEnd:
-		var move = enemy.chooseMove(self)
-		turnEnd = move[2]
-		match move[0]:
-			"move":
-				if isPathValid(move):
-					path = move[1]
-					acting = true
-					enemyWalking = true
-			_:
-				turnEnd = true
-				endTurn()
+	var enemy = enemies[current_enemy]
+	var move = enemy.choose_move(self)
+	turn_end = move[2]
+	match move[0]:
+		"move":
+			if is_path_valid(move):
+				path = move[1]
+				acting = true
+				enemy_walking = true
+		_:
+			turn_end = true
+			end_turn()
 	
 
-	
-	
-
-
-func skipTurnPressed():
-	if isPlayerTurn && !acting:
-		turnEnd = true
-		endTurn()
-
+func skip_turn_pressed():
+	if is_player_turn && !acting:
+		turn_end = true
+		end_turn()

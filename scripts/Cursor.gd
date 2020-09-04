@@ -1,16 +1,16 @@
 extends Sprite
 
 # Constraints of the cursor effectiveness
-const cursorRange = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
+const CURSOR_RANGE = Rect2(40 + 5, 20 + 2.5, 1440 - 10, 1060 - 5)
 
-var redFadeTimer = 0
-var redFadeTime = 1
+var red_fade_timer = 0
+var red_fade_time = 1
 
-var canUpdate = true
+var can_update = true
 
 func _process(delta):
-	if canUpdate:
-		if cursorRange.has_point(get_viewport().get_mouse_position()):
+	if can_update:
+		if CURSOR_RANGE.has_point(get_viewport().get_mouse_position()):
 			var mouse = get_global_mouse_position() / 64
 			mouse.x = floor(mouse.x)
 			mouse.y = floor(mouse.y)
@@ -21,15 +21,15 @@ func _process(delta):
 			else:
 				modulate = Color(1,0,0,1)
 				
-			if redFadeTimer > 0:
-				modulate = Color(1, (redFadeTime-redFadeTimer)/redFadeTime, (redFadeTime-redFadeTimer)/redFadeTime, 1)
-				redFadeTimer -= delta
-				if redFadeTimer < 0:
+			if red_fade_timer > 0:
+				modulate = Color(1, (red_fade_time-red_fade_timer)/red_fade_time, (red_fade_time-red_fade_timer)/red_fade_time, 1)
+				red_fade_timer -= delta
+				if red_fade_timer < 0:
 					modulate = Color(1,1,1,1)
 			
 
-func invalidTile(dist, maxDist, invalid, occupied, tooFar):
-	redFadeTimer = redFadeTime
+func invalid_tile(dist, maxDist, invalid, occupied, tooFar):
+	red_fade_timer = red_fade_time
 	var text = "You can't go there"
 	if invalid:
 		pass
@@ -37,16 +37,16 @@ func invalidTile(dist, maxDist, invalid, occupied, tooFar):
 		text = 'Tile too far away.\nCurrent: ' + str(dist) + "; Max: " + str(maxDist)
 	elif occupied:
 		text = 'Tile is already occupied'
-	get_parent().createBubbleText(text, position, randi()%20 == 0)
+	get_parent().create_bubble_text(text, position, randi()%20 == 0)
 
-func validTile():
-	canUpdate = false
+func valid_tile():
+	can_update = false
 	modulate = Color(0,1,0,1)
 
-func enableCursor():
-	canUpdate = true
+func enable_cursor():
+	can_update = true
 	modulate = Color(1,1,1,1)
 
-func disableCursor():
-	canUpdate = false
+func disable_cursor():
+	can_update = false
 	modulate = Color(1,1,1,0)

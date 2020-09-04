@@ -1,19 +1,19 @@
 extends CanvasLayer
 
-onready var timeBar = get_node("TimeBar")
-onready var timeText = get_node("TimeText")
+onready var time_bar = get_node("TimeBar")
+onready var time_text = get_node("TimeText")
 
-onready var skipButton = get_node("SkipTurnButton")
+onready var skip_button = get_node("SkipTurnButton")
 
-func updateTimeBar(time, maxTime):
-	timeBar.max_value = maxTime
-	timeBar.value = time
+func update_time_bar(time, max_time):
+	time_bar.max_value = max_time
+	time_bar.value = time
 	
-	timeText.bbcode_text = str(time) + ' / ' + str(maxTime)
+	time_text.bbcode_text = str(time) + ' / ' + str(max_time)
 
-func disableUI():
-	skipButton.disabled = true
+func disable_UI():
+	skip_button.disabled = true
 	
-func enableUI():
-	skipButton.disabled = false
+func enable_UI():
+	skip_button.disabled = false
 	
