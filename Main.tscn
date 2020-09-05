@@ -36,10 +36,6 @@ glow_hdr_threshold = 4.0
 0/tile_mode = 0
 0/occluder_offset = Vector2( 0, 0 )
 0/navigation_offset = Vector2( 0, 0 )
-0/shape_offset = Vector2( 0, 0 )
-0/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
-0/shape_one_way = false
-0/shape_one_way_margin = 0.0
 0/shapes = [  ]
 0/z_index = 0
 
@@ -97,14 +93,8 @@ position = Vector2( 1184, 928 )
 [node name="Enemies" type="Node2D" parent="."]
 light_mask = 0
 
-[node name="1" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 96, 288 )
-
-[node name="2" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1120, 224 )
-
-[node name="3" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 480, 736 )
+[node name="Advanced Enemy" parent="Enemies" instance=ExtResource( 5 )]
+position = Vector2( 1120, 96 )
 
 [node name="Cursor" type="Sprite" parent="."]
 light_mask = 0
