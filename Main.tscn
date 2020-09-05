@@ -82,7 +82,7 @@ position = Vector2( 96, 96 )
 position = Vector2( 1248, 160 )
 
 [node name="3" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 1120, 480 )
+position = Vector2( 800, 992 )
 
 [node name="4" parent="Players" instance=ExtResource( 3 )]
 position = Vector2( 1120, 800 )
@@ -94,7 +94,7 @@ position = Vector2( 1184, 928 )
 light_mask = 0
 
 [node name="Advanced Enemy" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1120, 96 )
+position = Vector2( 1056, 416 )
 
 [node name="Cursor" type="Sprite" parent="."]
 light_mask = 0
