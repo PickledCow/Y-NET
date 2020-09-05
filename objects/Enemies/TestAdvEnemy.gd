@@ -21,6 +21,6 @@ func choose_move(root):
 	var path = root.astar.get_point_path(pos.y * (root.maxX + 1) + pos.x, y * (root.maxX + 1) + x)
 	if len(path) >= 2 && len(path) <= root.current_turn_time / walk_time + 1 && root.is_tile_free(x, y):
 		return [CONSTS.ENEMY_ACTION.WALK, path, true]
-	root.createBubbleText("[center][shake rate=25 level=30]I'm lost :(", position, false)
+	root.create_bubble_text("[center][shake rate=25 level=30]I'm lost :(", position, false)
 	return [null, null, true]
 
