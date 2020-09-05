@@ -4,7 +4,7 @@
 [ext_resource path="res://testworld.tscn" type="PackedScene" id=2]
 [ext_resource path="res://objects/Player.tscn" type="PackedScene" id=3]
 [ext_resource path="res://objects/Camera.tscn" type="PackedScene" id=4]
-[ext_resource path="res://objects/BasicEnemy.tscn" type="PackedScene" id=5]
+[ext_resource path="res://objects/Enemies/TestAdvEnemy.tscn" type="PackedScene" id=5]
 [ext_resource path="res://sprites/world/cursor.png" type="Texture" id=6]
 [ext_resource path="res://scripts/Cursor.gd" type="Script" id=7]
 [ext_resource path="res://sprites/world/outline.png" type="Texture" id=8]
@@ -36,6 +36,10 @@ glow_hdr_threshold = 4.0
 0/tile_mode = 0
 0/occluder_offset = Vector2( 0, 0 )
 0/navigation_offset = Vector2( 0, 0 )
+0/shape_offset = Vector2( 0, 0 )
+0/shape_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+0/shape_one_way = false
+0/shape_one_way_margin = 0.0
 0/shapes = [  ]
 0/z_index = 0
 
@@ -94,22 +98,13 @@ position = Vector2( 1184, 928 )
 light_mask = 0
 
 [node name="1" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 736, 224 )
+position = Vector2( 96, 288 )
 
 [node name="2" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1504, 96 )
+position = Vector2( 1120, 224 )
 
 [node name="3" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 992, 992 )
-
-[node name="4" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1696, 992 )
-
-[node name="5" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1824, 992 )
-
-[node name="6" parent="Enemies" instance=ExtResource( 5 )]
-position = Vector2( 1248, 864 )
+position = Vector2( 480, 736 )
 
 [node name="Cursor" type="Sprite" parent="."]
 light_mask = 0
