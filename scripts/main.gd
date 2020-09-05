@@ -322,7 +322,7 @@ func current_enemy_move():
 	turn_end = move[2]
 	match move[0]:
 		CONSTS.ENEMY_ACTION.WALK:
-			if is_path_valid(move[1], current_turn_time / enemies[current_enemy].walk_time):
+			if is_path_valid(move[1], enemies[current_enemy].walk_time):
 				valid_move = true
 				path = move[1]
 				current_turn_time -= enemies[current_enemy].walk_time * (len(path) - 1)
