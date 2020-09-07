@@ -1,7 +1,7 @@
 extends "res://scripts/BasicEnemy.gd"
 
 func _ready():
-	walk_time = 1
+	walk_time = 10
 
 func choose_move(root):
 	var valid_spot = false

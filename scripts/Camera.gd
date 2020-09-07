@@ -21,10 +21,10 @@ func _process(delta):
 		
 		position += move * 1000 * delta * sqrt(zoom.x)
 		
-		if Input.is_action_just_pressed("cameraDrag"):
+		if Input.is_action_just_pressed("cameraDrag") || (get_parent().player_action == CONSTS.ACTION.IDLE && Input.is_action_just_pressed("click")):
 			mouse_last_position = get_viewport().get_mouse_position()
 		
-		if Input.is_action_pressed("cameraDrag"):
+		if Input.is_action_pressed("cameraDrag") || (get_parent().player_action == CONSTS.ACTION.IDLE && Input.is_action_pressed("click")):
 			position += (mouse_last_position - get_viewport().get_mouse_position()) * zoom.x
 			mouse_last_position = get_viewport().get_mouse_position()
 		
@@ -32,8 +32,9 @@ func _process(delta):
 	
 	if !target_reached:
 		position = position.linear_interpolate(target_actor.position, exp(-88 * delta))
-		
-		if position.distance_squared_to(target_actor.position) < 100:
+		if target_set:
+			target_set = false
+		elif position.distance_squared_to(target_actor.position) < 100:
 			position = target_actor.position
 			target_reached = true
 			free_move = true
@@ -62,7 +63,10 @@ func _input(event):
 				offset *= multiplier
 
 
+var target_set = false
+
 func set_target(target):
+	target_set = true
 	target_actor = target
 	target_reached = false
 	self.position += offset

@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=2]
+[gd_scene load_steps=26 format=2]
 
 [ext_resource path="res://scripts/main.gd" type="Script" id=1]
 [ext_resource path="res://testworld.tscn" type="PackedScene" id=2]
@@ -49,6 +49,16 @@ outline_color = Color( 0, 0, 0, 1 )
 use_filter = true
 font_data = ExtResource( 10 )
 
+[sub_resource type="DynamicFont" id=5]
+size = 24
+outline_size = 2
+outline_color = Color( 0, 0, 0, 1 )
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 10 )
+
+[sub_resource type="ButtonGroup" id=6]
+
 [node name="main" type="Node2D"]
 script = ExtResource( 1 )
 __meta__ = {
@@ -80,15 +90,6 @@ position = Vector2( 96, 96 )
 
 [node name="2" parent="Players" instance=ExtResource( 3 )]
 position = Vector2( 1248, 160 )
-
-[node name="3" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 800, 992 )
-
-[node name="4" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 1120, 800 )
-
-[node name="5" parent="Players" instance=ExtResource( 3 )]
-position = Vector2( 1184, 928 )
 
 [node name="Enemies" type="Node2D" parent="."]
 light_mask = 0
@@ -158,4 +159,118 @@ texture_disabled = ExtResource( 14 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Idle" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1506.0
+margin_top = 160.0
+margin_right = 1596.0
+margin_bottom = 200.0
+hint_tooltip = "Clicking on a tile does not perform any action.  "
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+pressed = true
+group = SubResource( 6 )
+text = "IDLE"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Walk" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1624.0
+margin_top = 160.0
+margin_right = 1714.0
+margin_bottom = 200.0
+rect_pivot_offset = Vector2( -192, -64 )
+hint_tooltip = "Click on a tile to walk.  Slower than running but more quiet."
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+group = SubResource( 6 )
+text = "WALK"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Run" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1714.0
+margin_top = 160.0
+margin_right = 1804.0
+margin_bottom = 200.0
+rect_pivot_offset = Vector2( -192, -64 )
+hint_tooltip = "Click on a tile to run.  Faster than walking but very loud."
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+group = SubResource( 6 )
+text = "RUN"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Shoot" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1804.0
+margin_top = 160.0
+margin_right = 1894.0
+margin_bottom = 200.0
+rect_pivot_offset = Vector2( -192, -64 )
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+group = SubResource( 6 )
+text = "SHOOT"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Crouch" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1610.0
+margin_top = 208.0
+margin_right = 1714.0
+margin_bottom = 248.0
+rect_pivot_offset = Vector2( -192, -64 )
+hint_tooltip = "Enable crouching. Allows you to hide behind low walls.  Shooting is more accurate.   Walking is slower but silent.  "
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+text = "CROUCH"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Guard" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1714.0
+margin_top = 208.0
+margin_right = 1804.0
+margin_bottom = 248.0
+rect_pivot_offset = Vector2( -192, -64 )
+hint_tooltip = "Uses full turn.
+Player does not shoot immediately, but only if an enemy enters their field of view until their next turn."
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+text = "GUARD"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Shoot2" type="Button" parent="HUD"]
+light_mask = 0
+margin_left = 1804.0
+margin_top = 208.0
+margin_right = 1894.0
+margin_bottom = 248.0
+rect_pivot_offset = Vector2( -192, -64 )
+custom_fonts/font = SubResource( 5 )
+toggle_mode = true
+text = "DANCE"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 [connection signal="pressed" from="HUD/SkipTurnButton" to="." method="skip_turn_pressed"]
+[connection signal="pressed" from="HUD/Idle" to="." method="idle_pressed"]
+[connection signal="pressed" from="HUD/Walk" to="." method="walk_pressed"]
+[connection signal="pressed" from="HUD/Run" to="." method="run_pressed"]
+[connection signal="pressed" from="HUD/Shoot" to="." method="shoot_pressed"]
+[connection signal="toggled" from="HUD/Crouch" to="HUD" method="crouch_pressed"]
+[connection signal="toggled" from="HUD/Crouch" to="." method="crouch_pressed"]

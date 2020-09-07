@@ -129,6 +129,9 @@ func is_path_valid(path, walk_time):
 			break
 	return valid
 	
+# Same as get_point_path but uses Vector2 instead
+func get_AStar_path(from, to):
+	return astar.get_point_path(from.y * (maxX + 1) + from.x, to.y * (maxX + 1) + to.x)
 	
 # ---------------------------Object Spawning Functions------------------------ #
 
@@ -150,11 +153,14 @@ func create_bubble_text(text, pos, disco=false):
 
 var action = CONSTS.ACTION.IDLE # Current action being performed, refer to enums in Constants above
 
+var crouching = false
+
 var turn_end = false # If the player or enemy has declared that they have made their final move
 var is_player_turn = true
 var all_players_dead = false
 var all_enemies_dead = false
 
+var player_action = CONSTS.ACTION.IDLE # CHosed player action 
 
 # Main loop
 func _physics_process(delta):
@@ -163,11 +169,15 @@ func _physics_process(delta):
 			match action:
 				CONSTS.ACTION.WALKING:
 					move_actor(players[current_player])
+				CONSTS.ACTION.RUNNING:
+					move_actor(players[current_player])
 		elif !is_player_turn:
 			match action:
 				CONSTS.ACTION.IDLE:
 					current_enemy_move()
 				CONSTS.ACTION.WALKING:
+					move_actor(enemies[current_enemy])
+				CONSTS.ACTION.RUNNING:
 					move_actor(enemies[current_enemy])
 
 # Player input
@@ -177,7 +187,18 @@ func _input(event):
 		if event is InputEventMouseButton and event.pressed:
 			match event.button_index:
 				BUTTON_LEFT:
-					choose_dest_current_player()
+					match player_action:
+						CONSTS.ACTION.WALKING:
+							if crouching:
+								walk_time = players[current_player].crawl_time
+							else:
+								walk_time = players[current_player].walk_time
+							choose_dest_current_player()
+						
+						CONSTS.ACTION.RUNNING:
+							walk_time = players[current_player].run_time
+							choose_dest_current_player()
+						
 
 func choose_dest_current_player():
 	var valid = true
@@ -213,7 +234,7 @@ func choose_dest_current_player():
 	if len(newpath) < 2:
 		valid = false
 		
-	if (len(newpath)-1) * player.walk_time > current_turn_time:
+	if (len(newpath)-1) * walk_time > current_turn_time:
 		too_far = true
 		
 	if mouse.x < 0 || mouse.x > maxX:
@@ -222,12 +243,12 @@ func choose_dest_current_player():
 	if valid && !too_far && !occupied:
 		cursor.valid_tile()
 		path = newpath
-		action = CONSTS.ACTION.WALKING
-		current_turn_time -= (len(newpath)-1) * player.walk_time
+		action = player_action
+		current_turn_time -= (len(newpath)-1) * walk_time
 		HUD_node.update_time_bar(current_turn_time, max_turn_time)
 		start_move(players[current_player])
 	else:
-		cursor.invalid_tile(len(newpath)-1, current_turn_time / player.walk_time, !valid, occupied, too_far)
+		cursor.invalid_tile(len(newpath)-1, current_turn_time / walk_time, !valid, occupied, too_far)
 		
 func shoot_current_player():
 	if Input.is_action_just_pressed("shoot"):
@@ -251,6 +272,8 @@ func shoot_current_player():
 var t = 0 # Timer walking between the tiles (micro scope) [0 <= t <= 1]
 var u = 0 # Timer walking through the tiles (macro scope) [0 <= u]
 
+var walk_time = 10
+
 func start_move(actor):
 	t = 0
 	u = 0
@@ -261,11 +284,12 @@ func start_move(actor):
 
 func move_actor(actor):
 	actor.position = (path[u] * 64).linear_interpolate(path[u+1] * 64 , t) + Vector2(32,32)
-	t += 0.1
+	t += 1.0 / walk_time
 	if t >= 1:
 		t -= 1;
 		u += 1
 		if u == len(path) - 1:
+			actor.position = path[u] * 64 + Vector2(32,32)
 			end_turn()
 	
 func end_turn():
@@ -289,6 +313,8 @@ func end_turn():
 			cursor.disable_cursor()
 			arrow_cursor.hide()
 			HUD_node.disable_UI()
+			
+			crouching = enemies[current_enemy].crouching
 		
 		else:
 			
@@ -302,6 +328,7 @@ func end_turn():
 					break
 	
 			camera.set_target(players[current_player])
+			crouching = players[current_player].crouching
 			
 		is_player_turn = !is_player_turn
 		current_turn_time = max_turn_time
@@ -311,7 +338,8 @@ func end_turn():
 		cursor.enable_cursor()
 		arrow_cursor.set_target(players[current_player])
 		arrow_cursor.show()
-		HUD_node.enable_UI()
+		HUD_node.reset_UI()
+		player_action = CONSTS.ACTION.IDLE
 		HUD_node.update_time_bar(current_turn_time, max_turn_time)
 
 func current_enemy_move():
@@ -323,12 +351,18 @@ func current_enemy_move():
 	match move[0]:
 		CONSTS.ENEMY_ACTION.WALK:
 			if is_path_valid(move[1], enemies[current_enemy].walk_time):
+				walk_time = enemies[current_enemy].walk_time
 				valid_move = true
 				path = move[1]
 				current_turn_time -= enemies[current_enemy].walk_time * (len(path) - 1)
 				action = CONSTS.ACTION.WALKING
 				start_move(enemies[current_enemy])
-			
+		CONSTS.ENEMY_ACTION.CROUCH:
+			valid_move = true
+			crouching = true
+		CONSTS.ENEMY_ACTION.UNCROUCH:
+			valid_move = true
+			crouching = false
 			
 	if !valid_move:
 		turn_end = true
@@ -340,3 +374,22 @@ func skip_turn_pressed():
 	if is_player_turn && action == CONSTS.ACTION.IDLE:
 		turn_end = true
 		end_turn()
+
+func idle_pressed():
+	player_action = CONSTS.ACTION.IDLE
+
+func walk_pressed():
+	player_action = CONSTS.ACTION.WALKING
+	
+func run_pressed():
+	player_action = CONSTS.ACTION.RUNNING
+
+func shoot_pressed():
+	player_action = CONSTS.ACTION.SHOOTING
+
+func crouch_pressed(button_pressed):
+	crouching = button_pressed
+	players[current_player].crouching = crouching
+	if crouching && player_action == CONSTS.ACTION.RUNNING:
+		player_action = CONSTS.ACTION.WALKING
+		
