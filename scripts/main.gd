@@ -326,7 +326,8 @@ func end_turn():
 					all_players_dead = true
 					print("gameover")
 					break
-	
+			player_action = CONSTS.ACTION.IDLE
+			
 			camera.set_target(players[current_player])
 			crouching = players[current_player].crouching
 			
@@ -339,7 +340,6 @@ func end_turn():
 		arrow_cursor.set_target(players[current_player])
 		arrow_cursor.show()
 		HUD_node.reset_UI()
-		player_action = CONSTS.ACTION.IDLE
 		HUD_node.update_time_bar(current_turn_time, max_turn_time)
 
 func current_enemy_move():

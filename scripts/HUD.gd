@@ -39,7 +39,15 @@ func enable_UI():
 
 func reset_UI():
 	enable_UI()
-	idle.pressed = true
+	match get_parent().player_action:
+		CONSTS.ACTION.IDLE:
+			idle.pressed = true
+		CONSTS.ACTION.RUNNING:
+			run.pressed = true
+		CONSTS.ACTION.WALKING:
+			walk.pressed = true
+		CONSTS.ACTION.SHOOTING:
+			shoot.pressed = true
 	crouch.pressed = get_parent().players[get_parent().current_player].crouching
 	guard.pressed = false
 
