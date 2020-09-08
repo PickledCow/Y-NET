@@ -72,6 +72,7 @@ func _ready():
 		
 	camera.set_target(players[current_player])
 	arrow_cursor.set_target(players[current_player])
+	get_visible_enemies()
 
 # ---------------------------Tool Functions----------------------------------- #
 
@@ -294,6 +295,7 @@ func move_actor(actor):
 	
 func end_turn():
 	action = CONSTS.ACTION.IDLE
+	get_visible_enemies()
 	
 	if current_turn_time == 0:
 		turn_end = true
@@ -370,6 +372,38 @@ func current_enemy_move():
 		end_turn()
 
 
+var visible_enemies = []
+var viewing_enemy = 0
+onready var raycast = get_node("raycast")
+const RAYCOUNT = 48
+	
+func get_visible_enemies():
+	visible_enemies.clear()
+	raycast.enabled = true
+	for enemy in enemies:
+		var spotted = false
+		for rotation in range(RAYCOUNT):
+			raycast.position = enemy.position + Vector2(32, 0).rotated(rotation * TAU / RAYCOUNT)
+			for player in players:
+				raycast.cast_to = player.position - raycast.position
+				raycast.force_raycast_update()
+				if !raycast.is_colliding():
+					spotted = true
+					visible_enemies.append(enemy)
+					break
+			if spotted: break
+	raycast.enabled = false
+
+func next_enemy():
+	if visible_enemies:
+		viewing_enemy = posmod(viewing_enemy + 1, len(visible_enemies))
+		camera.set_target(visible_enemies[viewing_enemy])
+
+func prev_enemy():
+	if visible_enemies:
+		viewing_enemy = posmod(viewing_enemy - 1, len(visible_enemies))
+		camera.set_target(visible_enemies[viewing_enemy])
+
 func skip_turn_pressed():
 	if is_player_turn && action == CONSTS.ACTION.IDLE:
 		turn_end = true
@@ -393,3 +427,5 @@ func crouch_pressed(button_pressed):
 	if crouching && player_action == CONSTS.ACTION.RUNNING:
 		player_action = CONSTS.ACTION.WALKING
 		
+
+

@@ -9,6 +9,8 @@ onready var run = get_node("Run")
 onready var shoot = get_node("Shoot")
 onready var crouch = get_node("Crouch")
 onready var guard = get_node("Guard")
+onready var next_enemy = get_node("NextEnemy")
+onready var prev_enemy = get_node("PreviousEnemy")
 
 
 onready var skip_button = get_node("SkipTurnButton")
@@ -27,6 +29,8 @@ func disable_UI():
 	shoot.disabled = true
 	crouch.disabled = true
 	guard.disabled = true
+	next_enemy.disabled = true
+	prev_enemy.disabled = true
 	
 func enable_UI():
 	skip_button.disabled = false
@@ -36,6 +40,8 @@ func enable_UI():
 	shoot.disabled = false
 	crouch.disabled = false
 	guard.disabled = false
+	next_enemy.disabled = false
+	prev_enemy.disabled = false
 
 func reset_UI():
 	enable_UI()
